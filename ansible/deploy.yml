@@ -1,0 +1,15 @@
+- name: Deploy Finance Project
+  hosts: test_servers
+  become: true
+  tasks:
+    - name: Pull the latest Docker image
+      command: docker pull faiyazluck/finance-me-service:latest
+
+    - name: Stop existing container
+      command: docker stop finance-service || true
+
+    - name: Remove old container
+      command: docker rm finance-service || true
+
+    - name: Run the new container
+      command: docker run -d --name finance-service -p 80:8080 faiyazluck/finance-me-service:latest
