@@ -3,13 +3,21 @@
   become: true
   tasks:
     - name: Pull the latest Docker image
-      command: docker pull faiyazluck/finance-me-service:latest
+      community.docker.docker_image:
+        name: faiyazluck/finance-me-service:latest
+        source: pull
+        force_source: yes  # Ensures it always pulls the latest image
 
-    - name: Stop existing container
-      command: docker stop finance-service || true
-
-    - name: Remove old container
-      command: docker rm finance-service || true
+    - name: Stop and remove old container (if exists)
+      community.docker.docker_container:
+        name: finance-service
+        state: absent  # Ensures the container is removed if it exists
 
     - name: Run the new container
-      command: docker run -d --name finance-service -p 80:8080 faiyazluck/finance-me-service:latest
+      community.docker.docker_container:
+        name: finance-service
+        image: faiyazluck/finance-me-service:latest
+        state: started
+        restart_policy: always
+        ports:
+          - "80:8080"
