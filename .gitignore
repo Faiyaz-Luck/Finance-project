@@ -1,9 +1,6 @@
 .terraform/
 # Ansible-related ignores
 .vault_pass
-ansible/hosts
-ansible/prod-hosts
-ansible/test-hosts
 ansible/.cache/
 *.retry
 *.log
@@ -12,7 +9,6 @@ ansible/.cache/
 # SSH Keys
 ansible/id_rsa
 ansible/id_rsa.pub
-
 # Terraform ignores
 terraform.tfstate
 terraform.tfstate.backup

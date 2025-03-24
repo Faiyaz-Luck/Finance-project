@@ -1,0 +1,5 @@
+[test_servers]
+13.202.88.139 ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/id_rsa
+
+[prod_servers]
+13.202.89.131 ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/id_rsa
