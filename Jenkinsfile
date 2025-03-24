@@ -20,14 +20,20 @@
                 }
             }
 
-            stage('Docker Build and Push for banking project') {
-                steps {
-                    script {
-                        sh 'docker build -t faiyazluck/finance-me-service:${BUILD_NUMBER} .'
-                        sh 'docker push faiyazluck/finance-me-service:${BUILD_NUMBER}'
-                    }
+    stage('Docker Build and Push for banking project') {
+        steps {
+            script {
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
+                    sh 'docker build -t faiyazluck/finance-me-service:${BUILD_NUMBER} .'
+                    sh 'docker tag faiyazluck/finance-me-service:${BUILD_NUMBER} faiyazluck/finance-me-service:latest'
+                    sh 'docker push faiyazluck/finance-me-service:${BUILD_NUMBER}'
+                    sh 'docker push faiyazluck/finance-me-service:latest'
                 }
             }
+        }
+    }
+
 
 
             stage('Infrastructure Provisioning with Terraform') {
