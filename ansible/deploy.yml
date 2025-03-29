@@ -1,5 +1,5 @@
 - name: Deploy Finance Project
-  hosts: test_servers
+  hosts: test
   become: true
   tasks:
     - name: Pull the latest Docker image
