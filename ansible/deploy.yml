@@ -42,7 +42,7 @@
         remote_src: yes
 
     - name: Move Prometheus binaries
-      command: mv /opt/prometheus-*/prometheus /usr/local/bin/
+      command: mv /opt/prometheus-2.53.4.linux-amd64/prometheus /usr/local/bin/
     
     - name: Move Prometheus config
       command: mv /opt/prometheus-*/prometheus.yml /etc/prometheus.yml
