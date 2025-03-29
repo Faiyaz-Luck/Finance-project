@@ -46,12 +46,24 @@
                 }
             }
 
-        stage('Deploy to Production') {
-            steps {
-                input message: 'Deploy to Production?', ok: 'Deploy'
-                sh 'ansible-playbook -i ansible/hosts ansible/deploy.yml'
+            stage('Deploy to Test server'){
+                steps{
+                    echo 'Deploying to test server'
+                }
             }
+
+stage('Deploy to Production') {
+    when {
+        expression { currentBuild.result == 'SUCCESS' } // Deploy only if tests pass
+    }
+    steps {
+        script {
+            echo 'Deploying to Production...'
+            sh 'ansible-playbook -i ansible/hosts ansible/deploy-prod.yml'
         }
+    }
+}
+
 
         }
 
