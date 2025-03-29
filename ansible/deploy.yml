@@ -1,7 +1,123 @@
+# - name: Deploy Finance Project
+#   hosts: test
+#   become: true
+#   tasks:
+#     # ----------- Pull and Run Finance Service in Docker ----------- #
+#     - name: Pull the latest Docker image
+#       community.docker.docker_image:
+#         name: faiyazluck/finance-me-service:latest
+#         source: pull
+#         force_source: yes
+
+#     - name: Stop and remove old container (if exists)
+#       community.docker.docker_container:
+#         name: finance-service
+#         state: absent
+
+#     - name: Run the new container
+#       community.docker.docker_container:
+#         name: finance-service
+#         image: faiyazluck/finance-me-service:latest
+#         state: started
+#         restart_policy: always
+#         ports:
+#           - "80:8080"
+
+#     # ----------- Install Prometheus ----------- #
+#     - name: Set Prometheus download URL
+#       set_fact:
+#         prometheus_download_url: "https://github.com/prometheus/prometheus/releases/download/v2.53.4/prometheus-2.53.4.linux-amd64.tar.gz"
+
+#     - name: Download Prometheus
+#       get_url:
+#         url: "{{ prometheus_download_url }}"
+#         dest: "/tmp/prometheus.tar.gz"
+
+#     - name: Extract Prometheus
+#       ansible.builtin.unarchive:
+#         src: "/tmp/prometheus.tar.gz"
+#         dest: "/opt/"
+#         remote_src: yes
+
+#     - name: Copy Prometheus binary
+#       copy:
+#         src: "/opt/prometheus-2.53.4.linux-amd64/prometheus"
+#         dest: "/usr/local/bin/prometheus"
+#         remote_src: yes
+#         mode: '0755'
+
+#     - name: Find Prometheus config file
+#       shell: "find /opt -type f -name 'prometheus.yml'"
+#       register: prometheus_config_path
+
+#     - name: Move Prometheus config
+#       command: mv {{ prometheus_config_path.stdout }} /etc/prometheus.yml
+#       when: prometheus_config_path.stdout | length > 0
+
+#     - name: Ensure Prometheus data directory exists
+#       file:
+#         path: /var/lib/prometheus
+#         state: directory
+#         owner: root
+#         group: root
+#         mode: '0755'
+
+#     - name: Create Prometheus service file
+#       copy:
+#         dest: /etc/systemd/system/prometheus.service
+#         content: |
+#           [Unit]
+#           Description=Prometheus
+#           Wants=network-online.target
+#           After=network-online.target
+
+#           [Service]
+#           User=root
+#           ExecStart=/usr/local/bin/prometheus --config.file=/etc/prometheus.yml --storage.tsdb.path=/var/lib/prometheus
+#           Restart=always
+
+#           [Install]
+#           WantedBy=multi-user.target
+
+#     - name: Reload systemd and start Prometheus service
+#       systemd:
+#         daemon_reload: yes
+#         name: prometheus
+#         enabled: yes
+#         state: started
+
+#     # ----------- Install Grafana ----------- #
+#     - name: Add Grafana APT repository key
+#       ansible.builtin.apt_key:
+#         url: https://packages.grafana.com/gpg.key
+#         state: present
+
+#     - name: Add Grafana repository
+#       ansible.builtin.apt_repository:
+#         repo: "deb https://packages.grafana.com/oss/deb stable main"
+#         state: present
+#         filename: grafana
+
+#     - name: Update package cache
+#       ansible.builtin.apt:
+#         update_cache: yes
+
+#     - name: Install Grafana
+#       ansible.builtin.apt:
+#         name: grafana
+#         state: present
+
+#     - name: Start Grafana service
+#       ansible.builtin.systemd:
+#         name: grafana-server
+#         enabled: yes
+#         state: started
+
 - name: Deploy Finance Project
   hosts: test
   become: true
   tasks:
+  
     # ----------- Pull and Run Finance Service in Docker ----------- #
     - name: Pull the latest Docker image
       community.docker.docker_image:
@@ -24,11 +140,11 @@
           - "80:8080"
 
     # ----------- Install Prometheus ----------- #
-    - name: Set Prometheus download URL
+    - name: Set Prometheus download URL (ARM64 version)
       set_fact:
-        prometheus_download_url: "https://github.com/prometheus/prometheus/releases/download/v2.53.4/prometheus-2.53.4.linux-amd64.tar.gz"
+        prometheus_download_url: "https://github.com/prometheus/prometheus/releases/latest/download/prometheus-2.53.4.linux-arm64.tar.gz"
 
-    - name: Download Prometheus
+    - name: Download Prometheus (ARM64)
       get_url:
         url: "{{ prometheus_download_url }}"
         dest: "/tmp/prometheus.tar.gz"
@@ -41,18 +157,10 @@
 
     - name: Copy Prometheus binary
       copy:
-        src: "/opt/prometheus-2.53.4.linux-amd64/prometheus"
+        src: "/opt/prometheus-2.53.4.linux-arm64/prometheus"
         dest: "/usr/local/bin/prometheus"
         remote_src: yes
         mode: '0755'
-
-    - name: Find Prometheus config file
-      shell: "find /opt -type f -name 'prometheus.yml'"
-      register: prometheus_config_path
-
-    - name: Move Prometheus config
-      command: mv {{ prometheus_config_path.stdout }} /etc/prometheus.yml
-      when: prometheus_config_path.stdout | length > 0
 
     - name: Ensure Prometheus data directory exists
       file:
@@ -61,6 +169,12 @@
         owner: root
         group: root
         mode: '0755'
+
+    - name: Copy Prometheus config
+      copy:
+        src: "/opt/prometheus-2.53.4.linux-arm64/prometheus.yml"
+        dest: "/etc/prometheus.yml"
+        remote_src: yes
 
     - name: Create Prometheus service file
       copy:
@@ -112,3 +226,17 @@
         name: grafana-server
         enabled: yes
         state: started
+
+    # ----------- Open Firewall for Grafana & Prometheus ----------- #
+    - name: Allow HTTP traffic for Prometheus & Grafana
+      ansible.builtin.ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+      loop:
+        - 9090  # Prometheus
+        - 3000  # Grafana
+
+    - name: Enable UFW (if not already enabled)
+      ansible.builtin.ufw:
+        state: enabled
