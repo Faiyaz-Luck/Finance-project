@@ -1,8 +1,9 @@
-- name: Deploy Finance Project
-  hosts: test
-  become: true
+---
+- name: Deploy Finance Project to Production
+  hosts: prod_servers
+  become: yes
   tasks:
-  
+
     # ----------- Pull and Run Finance Service in Docker ----------- #
     - name: Pull the latest Docker image
       community.docker.docker_image:
@@ -21,10 +22,14 @@
         image: faiyazluck/finance-me-service:latest
         state: started
         restart_policy: always
+        env:
+          DB_HOST: "{{ db_host }}"
+          DB_USER: "{{ db_user }}"
+          DB_PASS: "{{ db_pass }}"
         ports:
           - "80:8080"
 
-   # ----------- Install Prometheus ----------- #
+    # ----------- Install Prometheus (Optional for Prod) ----------- #
     - name: Install jq (if not installed)
       ansible.builtin.apt:
         name: jq
@@ -41,7 +46,6 @@
     - name: Set Prometheus download URL (ARM64)
       set_fact:
         prometheus_download_url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version.stdout }}/prometheus-{{ prometheus_version.stdout }}.linux-arm64.tar.gz"
-
 
     - name: Download Prometheus (ARM64)
       get_url:
@@ -99,7 +103,7 @@
         enabled: yes
         state: started
 
-    # ----------- Install Grafana ----------- #
+    # ----------- Install Grafana (Optional for Prod) ----------- #
     - name: Add Grafana APT repository key
       ansible.builtin.apt_key:
         url: https://packages.grafana.com/gpg.key
