@@ -2,6 +2,7 @@
   hosts: test
   become: true
   tasks:
+    # ----------- Pull and Run Finance Service in Docker ----------- #
     - name: Pull the latest Docker image
       community.docker.docker_image:
         name: faiyazluck/finance-me-service:latest
@@ -22,6 +23,7 @@
         ports:
           - "80:8080"
 
+    # ----------- Install Prometheus ----------- #
     - name: Set Prometheus download URL
       set_fact:
         prometheus_download_url: "https://github.com/prometheus/prometheus/releases/download/v2.53.4/prometheus-2.53.4.linux-amd64.tar.gz"
@@ -31,10 +33,6 @@
         url: "{{ prometheus_download_url }}"
         dest: "/tmp/prometheus.tar.gz"
 
-
-
-
-
     - name: Extract Prometheus
       ansible.builtin.unarchive:
         src: "/tmp/prometheus.tar.gz"
@@ -43,10 +41,22 @@
 
     - name: Move Prometheus binaries
       command: mv /opt/prometheus-2.53.4.linux-amd64/prometheus /usr/local/bin/
-    
+
+    - name: Find Prometheus config file
+      shell: "find /opt -type f -name 'prometheus.yml'"
+      register: prometheus_config_path
+
     - name: Move Prometheus config
-      command: mv /opt/prometheus-*/prometheus.yml /etc/prometheus.yml
-    
+      command: mv {{ prometheus_config_path.stdout }} /etc/prometheus.yml
+
+    - name: Ensure Prometheus data directory exists
+      file:
+        path: /var/lib/prometheus
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
     - name: Create Prometheus service file
       copy:
         dest: /etc/systemd/system/prometheus.service
@@ -64,13 +74,14 @@
           [Install]
           WantedBy=multi-user.target
 
-    - name: Start Prometheus service
+    - name: Reload systemd and start Prometheus service
       systemd:
+        daemon_reload: yes
         name: prometheus
         enabled: yes
         state: started
 
-    # --------------------- GRAFANA INSTALLATION ---------------------
+    # ----------- Install Grafana ----------- #
     - name: Install Grafana
       apt:
         name: grafana
