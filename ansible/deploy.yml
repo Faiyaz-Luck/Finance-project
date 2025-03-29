@@ -29,14 +29,20 @@
         return_content: yes
       register: prometheus_release
 
-    - name: Set Prometheus version
+    - name: Set Prometheus version (only stable releases)
       set_fact:
         prometheus_version: "{{ prometheus_release.json.tag_name | regex_replace('^v', '') }}"
+
+    - name: Ensure Prometheus version is valid
+      fail:
+        msg: "Invalid Prometheus version detected: {{ prometheus_version }}"
+      when: not prometheus_version | regex_search('^2\\.')
 
     - name: Download Prometheus
       get_url:
         url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}-linux-amd64.tar.gz"
         dest: "/tmp/prometheus.tar.gz"
+
 
 
     - name: Extract Prometheus
