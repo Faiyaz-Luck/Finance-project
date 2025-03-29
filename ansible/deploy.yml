@@ -139,10 +139,23 @@
         ports:
           - "80:8080"
 
-    # ----------- Install Prometheus ----------- #
+   # ----------- Install Prometheus ----------- #
+    - name: Install jq (if not installed)
+      ansible.builtin.apt:
+        name: jq
+        state: present
+      become: true
+
+    - name: Set Prometheus latest version dynamically
+      shell: >
+        curl -s https://api.github.com/repos/prometheus/prometheus/releases/latest |
+        jq -r '.tag_name' | sed 's/^v//'
+      register: prometheus_version
+      changed_when: false
+
     - name: Set Prometheus download URL (ARM64 version)
       set_fact:
-        prometheus_download_url: "https://github.com/prometheus/prometheus/releases/latest/download/prometheus-2.53.4.linux-arm64.tar.gz"
+        prometheus_download_url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version.stdout }}/prometheus-{{ prometheus_version.stdout }}.linux-arm64.tar.gz"
 
     - name: Download Prometheus (ARM64)
       get_url:
@@ -157,7 +170,7 @@
 
     - name: Copy Prometheus binary
       copy:
-        src: "/opt/prometheus-2.53.4.linux-arm64/prometheus"
+        src: "/opt/prometheus-{{ prometheus_version.stdout }}.linux-arm64/prometheus"
         dest: "/usr/local/bin/prometheus"
         remote_src: yes
         mode: '0755'
@@ -172,7 +185,7 @@
 
     - name: Copy Prometheus config
       copy:
-        src: "/opt/prometheus-2.53.4.linux-arm64/prometheus.yml"
+        src: "/opt/prometheus-{{ prometheus_version.stdout }}.linux-arm64/prometheus.yml"
         dest: "/etc/prometheus.yml"
         remote_src: yes
 
