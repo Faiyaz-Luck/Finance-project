@@ -153,9 +153,9 @@
       register: prometheus_version
       changed_when: false
 
-    - name: Set Prometheus download URL (ARM64 version)
+    - name: Set Prometheus download URL (correct architecture)
       set_fact:
-        prometheus_download_url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version.stdout }}/prometheus-{{ prometheus_version.stdout }}.linux-arm64.tar.gz"
+        prometheus_download_url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version.stdout }}/prometheus-{{ prometheus_version.stdout }}.linux-aarch64.tar.gz"
 
     - name: Download Prometheus (ARM64)
       get_url:
