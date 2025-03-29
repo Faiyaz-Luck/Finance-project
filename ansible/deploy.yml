@@ -24,7 +24,7 @@
 
     - name: Set Prometheus download URL
       set_fact:
-      prometheus_download_url: "https://github.com/prometheus/prometheus/releases/download/v2.53.4/prometheus-2.53.4.linux-amd64.tar.gz"
+        prometheus_download_url: "https://github.com/prometheus/prometheus/releases/download/v2.53.4/prometheus-2.53.4.linux-amd64.tar.gz"
 
     - name: Download Prometheus
       get_url:
