@@ -46,11 +46,6 @@
                 }
             }
 
-            stage('Deployment to Test Server') {
-                steps {
-                }
-            }
-
             stage('Deploy to Production') {
                 when {
                     expression { currentBuild.result == 'SUCCESS' }
