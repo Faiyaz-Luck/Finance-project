@@ -46,15 +46,13 @@
                 }
             }
 
-            stage('Deploy to Production') {
-                when {
-                    expression { currentBuild.result == 'SUCCESS' }
-                }
-                steps {
-                    echo 'Deploying to Production...'
-                    sh 'ansible-playbook -i ansible/prod-hosts ansible/deploy.yml'
-                }
+        stage('Deploy to Production') {
+            steps {
+                input message: 'Deploy to Production?', ok: 'Deploy'
+                sh 'ansible-playbook -i ansible/hosts ansible/deploy.yml'
             }
+        }
+
         }
 
         post {

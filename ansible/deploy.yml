@@ -21,3 +21,57 @@
         restart_policy: always
         ports:
           - "80:8080"
+
+    # --------------------- PROMETHEUS INSTALLATION ---------------------
+    - name: Download Prometheus
+      get_url:
+        url: "https://github.com/prometheus/prometheus/releases/latest/download/prometheus-linux-amd64.tar.gz"
+        dest: "/tmp/prometheus.tar.gz"
+
+    - name: Extract Prometheus
+      ansible.builtin.unarchive:
+        src: "/tmp/prometheus.tar.gz"
+        dest: "/opt/"
+        remote_src: yes
+
+    - name: Move Prometheus binaries
+      command: mv /opt/prometheus-*/prometheus /usr/local/bin/
+    
+    - name: Move Prometheus config
+      command: mv /opt/prometheus-*/prometheus.yml /etc/prometheus.yml
+    
+    - name: Create Prometheus service file
+      copy:
+        dest: /etc/systemd/system/prometheus.service
+        content: |
+          [Unit]
+          Description=Prometheus
+          Wants=network-online.target
+          After=network-online.target
+
+          [Service]
+          User=root
+          ExecStart=/usr/local/bin/prometheus --config.file=/etc/prometheus.yml --storage.tsdb.path=/var/lib/prometheus
+          Restart=always
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Start Prometheus service
+      systemd:
+        name: prometheus
+        enabled: yes
+        state: started
+
+    # --------------------- GRAFANA INSTALLATION ---------------------
+    - name: Install Grafana
+      apt:
+        name: grafana
+        state: present
+        update_cache: yes
+
+    - name: Start Grafana service
+      systemd:
+        name: grafana-server
+        enabled: yes
+        state: started
