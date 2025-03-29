@@ -54,7 +54,13 @@
 
 stage('Deploy to Production') {
     when {
-        expression { currentBuild.result == 'SUCCESS' } // Deploy only if tests pass
+        beforeAgent true
+        not {
+            anyOf {
+                failed()
+                aborted()
+            }
+        }
     }
     steps {
         script {
@@ -63,6 +69,7 @@ stage('Deploy to Production') {
         }
     }
 }
+
 
 
         }
