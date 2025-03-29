@@ -22,26 +22,25 @@
         ports:
           - "80:8080"
 
-    # --------------------- PROMETHEUS INSTALLATION ---------------------
-    - name: Get the latest Prometheus release version
+    - name: Get the latest Prometheus release version (only v2.x.x)
       uri:
-        url: "https://api.github.com/repos/prometheus/prometheus/releases/latest"
+        url: "https://api.github.com/repos/prometheus/prometheus/releases"
         return_content: yes
-      register: prometheus_release
+      register: prometheus_releases
 
-    - name: Set Prometheus version (only stable releases)
+    - name: Filter latest stable v2 release
       set_fact:
-        prometheus_version: "{{ prometheus_release.json.tag_name | regex_replace('^v', '') }}"
+        prometheus_version: "{{ prometheus_releases.json | selectattr('tag_name', 'search', '^v2\\.') | map(attribute='tag_name') | list | first | regex_replace('^v', '') }}"
 
-    - name: Ensure Prometheus version is valid
-      fail:
-        msg: "Invalid Prometheus version detected: {{ prometheus_version }}"
-      when: not prometheus_version | regex_search('^2\\.')
+    - name: Debug Prometheus version
+      debug:
+        msg: "Selected Prometheus version: {{ prometheus_version }}"
 
     - name: Download Prometheus
       get_url:
         url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}-linux-amd64.tar.gz"
         dest: "/tmp/prometheus.tar.gz"
+
 
 
 
