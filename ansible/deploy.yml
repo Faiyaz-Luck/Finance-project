@@ -23,10 +23,21 @@
           - "80:8080"
 
     # --------------------- PROMETHEUS INSTALLATION ---------------------
+    - name: Get the latest Prometheus release version
+      uri:
+        url: "https://api.github.com/repos/prometheus/prometheus/releases/latest"
+        return_content: yes
+      register: prometheus_release
+
+    - name: Set Prometheus version
+      set_fact:
+        prometheus_version: "{{ prometheus_release.json.tag_name | regex_replace('^v', '') }}"
+
     - name: Download Prometheus
       get_url:
-        url: "https://github.com/prometheus/prometheus/releases/latest/download/prometheus-linux-amd64.tar.gz"
+        url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}-linux-amd64.tar.gz"
         dest: "/tmp/prometheus.tar.gz"
+
 
     - name: Extract Prometheus
       ansible.builtin.unarchive:
