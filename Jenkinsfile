@@ -20,22 +20,19 @@
                 }
             }
 
-    stage('Docker Build and Push for banking project') {
-        steps {
-            script {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
-                    sh 'docker build -t faiyazluck/finance-me-service:${BUILD_NUMBER} .'
-                    sh 'docker tag faiyazluck/finance-me-service:${BUILD_NUMBER} faiyazluck/finance-me-service:latest'
-                    sh 'docker push faiyazluck/finance-me-service:${BUILD_NUMBER}'
-                    sh 'docker push faiyazluck/finance-me-service:latest'
+            stage('Docker Build and Push for banking project') {
+                steps {
+                    script {
+                        withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                            sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
+                            sh 'docker build --platform linux/arm64 -t faiyazluck/finance-me-service:${BUILD_NUMBER} .'
+                            sh 'docker tag faiyazluck/finance-me-service:${BUILD_NUMBER} faiyazluck/finance-me-service:latest'
+                            sh 'docker push faiyazluck/finance-me-service:${BUILD_NUMBER}'
+                            sh 'docker push faiyazluck/finance-me-service:latest'
+                        }
+                    }
                 }
             }
-        }
-    }
-
-
-
             stage('Infrastructure Provisioning with Terraform') {
                 steps {
                     sh 'terraform init'
@@ -51,7 +48,6 @@
 
             stage('Deployment to Test Server') {
                 steps {
-                    sh 'docker-compose up -d'
                 }
             }
 
@@ -62,7 +58,6 @@
                 steps {
                     echo 'Deploying to Production...'
                     sh 'ansible-playbook -i ansible/prod-hosts ansible/deploy.yml'
-                    sh 'docker-compose -f prod-docker-compose.yml up -d'
                 }
             }
         }
