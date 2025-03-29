@@ -54,13 +54,7 @@
 
 stage('Deploy to Production') {
     when {
-        beforeAgent true
-        not {
-            anyOf {
-                failed()
-                aborted()
-            }
-        }
+        expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
     }
     steps {
         script {
@@ -69,6 +63,7 @@ stage('Deploy to Production') {
         }
     }
 }
+
 
 
 
