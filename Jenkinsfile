@@ -40,11 +40,11 @@
                 }
             }
 
-            stage('Configuration with Ansible') {
-                steps {
-                    sh 'ansible-playbook -i ansible/hosts ansible/deploy.yml'
-                }
-            }
+            // stage('Configuration with Ansible') {
+            //     steps {
+            //         sh 'ansible-playbook -i ansible/hosts ansible/deploy.yml'
+            //     }
+            // }
 
             stage('Deploy to Test server'){
                 steps{
@@ -53,9 +53,6 @@
             }
 
 stage('Deploy to Production') {
-    when {
-        expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
-    }
     steps {
         script {
             echo 'Deploying to Production...'
