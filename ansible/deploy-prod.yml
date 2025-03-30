@@ -22,12 +22,9 @@
         image: faiyazluck/finance-me-service:latest
         state: started
         restart_policy: always
-        env:
-          DB_HOST: "{{ db_host }}"
-          DB_USER: "{{ db_user }}"
-          DB_PASS: "{{ db_pass }}"
         ports:
           - "80:8080"
+
 
     # ----------- Install Prometheus (Optional for Prod) ----------- #
     - name: Install jq (if not installed)
