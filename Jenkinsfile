@@ -20,25 +20,22 @@
                 }
             }
 
-            stage('Docker Build and Push for banking project') {
-                steps {
-                    script {
-                        withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                            sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
-                            sh 'docker build --platform linux/arm64 -t faiyazluck/finance-me-service:${BUILD_NUMBER} .'
-                            sh 'docker tag faiyazluck/finance-me-service:${BUILD_NUMBER} faiyazluck/finance-me-service:latest'
-                            sh 'docker push faiyazluck/finance-me-service:${BUILD_NUMBER}'
-                            sh 'docker push faiyazluck/finance-me-service:latest'
-                        }
-                    }
+    stages {
+        stage('Docker Build and Run for banking project') {
+            steps {
+                script {
+                    sh 'docker build -t finance-me-service .'
+                    sh 'docker run -d -p 8080:8080 finance-me-service'
                 }
             }
-            stage('Infrastructure Provisioning with Terraform') {
-                steps {
-                    sh 'terraform init'
-                    sh 'terraform apply -auto-approve'
-                }
-            }
+        }
+    }
+            // stage('Infrastructure Provisioning with Terraform') {
+            //     steps {
+            //         sh 'terraform init'
+            //         sh 'terraform apply -auto-approve'
+            //     }
+            // }
 
             // stage('Configuration with Ansible') {
             //     steps {
@@ -56,7 +53,7 @@ stage('Deploy to Production') {
     steps {
         script {
             echo 'Deploying to Production...'
-            sh 'ansible-playbook -i ansible/hosts ansible/deploy-prod.yml'
+            // sh 'ansible-playbook -i ansible/hosts ansible/deploy-prod.yml'
         }
     }
 }
