@@ -42,7 +42,7 @@ pipeline {
 stage('Infrastructure Provisioning with Terraform') {
     steps {
         withCredentials([usernamePassword(
-            credentialsId: 'aws-credentials-id',
+            credentialsId: 'aws-cred-id',
             usernameVariable: 'AWS_ACCESS_KEY_ID',
             passwordVariable: 'AWS_SECRET_ACCESS_KEY'
         )]) {
