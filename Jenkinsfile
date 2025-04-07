@@ -3,7 +3,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/Faiyaz-Luck/Finance-project.git'
+                git branch: 'main', url: 'https://github.com/Faiyaz-Luck/Finance-project.git'
             }
         }
         stage('Build') {
@@ -16,7 +16,7 @@ pipeline {
                 sh 'mvn test'
             }
         }
-        stage('Build Docker Image') {
+        stage('Build Docker Image') {   
             steps {
                 sh 'docker build -t finance-me-service .'
             }
