@@ -1,7 +1,6 @@
-target/
-.git
-.gitignore
-*.md
-Dockerfile
-*.sh
-*.log
+    .git
+    .gitignore
+    *.md
+    Dockerfile
+    *.sh
+    *.log
