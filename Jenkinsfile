@@ -75,22 +75,29 @@ stage('Infrastructure Provisioning with Terraform') {
             }
         }
 
-        stage('Deploy to Test Server') {
-            steps {
-                script {
-                    sh 'ansible --version || (echo "Ansible not installed!" && exit 1)'
-                    sh 'ansible-playbook ansible/deploy.yml'
-                }
-            }
+     stage('Deploy to Test Server') {
+    steps {
+        script {
+            sh '''
+                export ANSIBLE_CONFIG=ansible/ansible.cfg
+                ansible --version
+                ansible-playbook -i ansible/hosts ansible/deploy.yml
+            '''
         }
+    }
+}
 
-        stage('Deploy to Prod Server') {
-            steps {
-                script {
-                    sh 'ansible-playbook ansible/deploy-prod.yml'
-                }
-            }
+stage('Deploy to Prod Server') {
+    steps {
+        script {
+            sh '''
+                export ANSIBLE_CONFIG=ansible/ansible.cfg
+                ansible-playbook -i ansible/hosts ansible/deploy-prod.yml
+            '''
         }
+    }
+}
+
     }
 
     post {
