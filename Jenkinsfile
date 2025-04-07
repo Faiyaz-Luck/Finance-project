@@ -39,12 +39,19 @@ pipeline {
             }
         }
 
-        stage('Infrastructure Provisioning with Terraform') {
-                 steps {
-                     sh 'terraform init'
-                     sh 'terraform apply -auto-approve'
-                 }
+stage('Infrastructure Provisioning with Terraform') {
+    steps {
+        withCredentials([usernamePassword(
+            credentialsId: 'aws-credentials-id',
+            usernameVariable: 'AWS_ACCESS_KEY_ID',
+            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+        )]) {
+            sh 'terraform init'
+            sh 'terraform apply -auto-approve'
         }
+    }
+}
+
 
         stage('Build Docker Image') {
             steps {
