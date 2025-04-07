@@ -61,7 +61,7 @@ pipeline {
             steps {
                 script {
                     sh 'ansible --version || (echo "Ansible not installed!" && exit 1)'
-                    sh 'ansible-playbook test-deployment.yml'
+                    sh 'ansible-playbook deploy.yml'
                 }
             }
         }
@@ -69,7 +69,7 @@ pipeline {
         stage('Deploy to Prod Server') {
             steps {
                 script {
-                    sh 'ansible-playbook prod-deployment.yml'
+                    sh 'ansible-playbook deploy-prod.yml'
                 }
             }
         }
