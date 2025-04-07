@@ -1,9 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'maven:3.8.5-openjdk-17'
-        }
-    }
+    agent any
 
     environment {
         DOCKER_IMAGE_NAME = 'faiyazluck/finance-me-service'
@@ -22,12 +18,22 @@ pipeline {
         }
 
         stage('Build') {
+            agent {
+                docker {
+                    image 'maven:3.8.5-openjdk-17'
+                }
+            }
             steps {
                 sh 'mvn clean package'
             }
         }
 
         stage('Test') {
+            agent {
+                docker {
+                    image 'maven:3.8.5-openjdk-17'
+                }
+            }
             steps {
                 sh 'mvn test'
             }
