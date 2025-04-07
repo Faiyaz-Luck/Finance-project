@@ -39,20 +39,12 @@ pipeline {
             }
         }
 
-        stage('Terraform Apply') {
-      steps {
-        dir('Finance-project') {
-          withCredentials([[
-            $class: 'AmazonWebServicesCredentialsBinding',
-            credentialsId: 'aws-credentials-id'
-          ]]) {
-            sh 'terraform init'
-            sh 'terraform plan -out=tfplan'
-            sh 'terraform apply -auto-approve tfplan'
-          }
+        stage('Infrastructure Provisioning with Terraform') {
+                 steps {
+                     sh 'terraform init'
+                     sh 'terraform apply -auto-approve'
+                 }
         }
-      }
-    }
 
         stage('Build Docker Image') {
             steps {
