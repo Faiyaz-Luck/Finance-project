@@ -79,7 +79,7 @@ stage('Infrastructure Provisioning with Terraform') {
             steps {
                 script {
                     sh 'ansible --version || (echo "Ansible not installed!" && exit 1)'
-                    sh 'ansible-playbook deploy.yml'
+                    sh 'ansible-playbook ansible/deploy.yml'
                 }
             }
         }
@@ -87,7 +87,7 @@ stage('Infrastructure Provisioning with Terraform') {
         stage('Deploy to Prod Server') {
             steps {
                 script {
-                    sh 'ansible-playbook deploy-prod.yml'
+                    sh 'ansible-playbook ansible/deploy-prod.yml'
                 }
             }
         }
