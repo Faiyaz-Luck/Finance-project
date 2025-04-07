@@ -1,0 +1,11 @@
+global:
+  scrape_interval: 15s
+
+  scrape_configs:
+    - job_name: 'test-server'
+      static_configs:
+        - targets: ['13.201.117.89:9090']
+
+    - job_name: 'prod-server'
+      static_configs:
+        - targets: ['13.126.249.211:9090']
