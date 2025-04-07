@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKER_IMAGE_NAME = 'faiyazluck/finance-me-service'
-        DOCKER_TAG = 'latest'
+        DOCKER_TAG = "${params.DOCKER_TAG}"
     }
 
     parameters {
@@ -39,6 +39,23 @@ pipeline {
             }
         }
 
+        stage('Terraform Apply') {
+            steps {
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'aws-credentials-id'
+                ]]) {
+                    dir('terraform') {
+                        sh '''
+                            terraform init
+                            terraform plan -out=tfplan
+                            terraform apply -auto-approve tfplan
+                        '''
+                    }
+                }
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 script {
@@ -50,7 +67,11 @@ pipeline {
 
         stage('Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-cred-id', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-cred-id', 
+                    usernameVariable: 'DOCKER_USER', 
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
                     sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
                     sh "docker push ${DOCKER_IMAGE_NAME}:${params.DOCKER_TAG}"
                 }
@@ -77,13 +98,13 @@ pipeline {
 
     post {
         success {
-            echo "🎉 Deployment succeeded!"
+            echo " Deployment succeeded!"
         }
         failure {
-            echo "❌ Deployment failed. Please check logs."
+            echo " Deployment failed. Please check logs."
         }
         always {
-            echo "📦 Pipeline execution completed."
+            echo " Pipeline execution completed."
         }
     }
 }
