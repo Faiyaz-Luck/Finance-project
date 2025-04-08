@@ -1,9 +1,8 @@
 ---
-- name: Deploy Finance Project to Production
+- name: Deploy Finance Project to production
   hosts: prod_servers
-  become: yes
+  become: true
   tasks:
-
     # ----------- Pull and Run Finance Service in Docker ----------- #
     - name: Pull the latest Docker image
       community.docker.docker_image:
@@ -25,8 +24,7 @@
         ports:
           - "80:8080"
 
-
-    # ----------- Install Prometheus (Optional for Prod) ----------- #
+    # ----------- Install Prometheus ----------- #
     - name: Install jq (if not installed)
       ansible.builtin.apt:
         name: jq
@@ -76,23 +74,6 @@
         dest: "/etc/prometheus.yml"
         remote_src: yes
 
-    - name: Create Prometheus service file
-      copy:
-        dest: /etc/systemd/system/prometheus.service
-        content: |
-          [Unit]
-          Description=Prometheus
-          Wants=network-online.target
-          After=network-online.target
-
-          [Service]
-          User=root
-          ExecStart=/usr/local/bin/prometheus --config.file=/etc/prometheus.yml --storage.tsdb.path=/var/lib/prometheus
-          Restart=always
-
-          [Install]
-          WantedBy=multi-user.target
-
     - name: Reload systemd and start Prometheus service
       systemd:
         daemon_reload: yes
@@ -100,7 +81,7 @@
         enabled: yes
         state: started
 
-    # ----------- Install Grafana (Optional for Prod) ----------- #
+    # ----------- Install Grafana ----------- #
     - name: Add Grafana APT repository key
       ansible.builtin.apt_key:
         url: https://packages.grafana.com/gpg.key
@@ -140,3 +121,51 @@
     - name: Enable UFW (if not already enabled)
       ansible.builtin.ufw:
         state: enabled
+
+
+# ----------- Install Node Exporter on Test Server ----------- #
+- name: Install Node Exporter on test server
+  hosts: prod_servers
+  become: true
+  tasks:
+    - name: Download Node Exporter
+      get_url:
+        url: https://github.com/prometheus/node_exporter/releases/download/v1.3.1/node_exporter-1.3.1.linux-amd64.tar.gz
+        dest: /tmp/node_exporter.tar.gz
+
+    - name: Extract Node Exporter
+      unarchive:
+        src: /tmp/node_exporter.tar.gz
+        dest: /opt/
+        remote_src: yes
+
+    - name: Move Node Exporter binary to /usr/local/bin
+      ansible.builtin.shell: |
+        mv /opt/node_exporter-1.3.1.linux-amd64/node_exporter /usr/local/bin/node_exporter
+        chmod 755 /usr/local/bin/node_exporter
+
+    - name: Create node_exporter systemd service
+      copy:
+        dest: /etc/systemd/system/node_exporter.service
+        content: |
+          [Unit]
+          Description=Node Exporter
+          After=network.target
+
+          [Service]
+          ExecStart=/usr/local/bin/node_exporter
+          User=nobody
+          Restart=always
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+
+    - name: Enable and start Node Exporter service
+      systemd:
+        name: node_exporter
+        enabled: yes
+        state: started
