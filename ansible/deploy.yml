@@ -2,7 +2,6 @@
   hosts: test
   become: true
   tasks:
-  
     # ----------- Pull and Run Finance Service in Docker ----------- #
     - name: Pull the latest Docker image
       community.docker.docker_image:
@@ -24,7 +23,7 @@
         ports:
           - "80:8080"
 
-   # ----------- Install Prometheus ----------- #
+    # ----------- Install Prometheus ----------- #
     - name: Install jq (if not installed)
       ansible.builtin.apt:
         name: jq
@@ -41,7 +40,6 @@
     - name: Set Prometheus download URL (ARM64)
       set_fact:
         prometheus_download_url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version.stdout }}/prometheus-{{ prometheus_version.stdout }}.linux-arm64.tar.gz"
-
 
     - name: Download Prometheus (ARM64)
       get_url:
@@ -74,23 +72,6 @@
         src: "/opt/prometheus-{{ prometheus_version.stdout }}.linux-arm64/prometheus.yml"
         dest: "/etc/prometheus.yml"
         remote_src: yes
-
-    - name: Create Prometheus service file
-      copy:
-        dest: /etc/systemd/system/prometheus.service
-        content: |
-          [Unit]
-          Description=Prometheus
-          Wants=network-online.target
-          After=network-online.target
-
-          [Service]
-          User=root
-          ExecStart=/usr/local/bin/prometheus --config.file=/etc/prometheus.yml --storage.tsdb.path=/var/lib/prometheus
-          Restart=always
-
-          [Install]
-          WantedBy=multi-user.target
 
     - name: Reload systemd and start Prometheus service
       systemd:
@@ -139,3 +120,33 @@
     - name: Enable UFW (if not already enabled)
       ansible.builtin.ufw:
         state: enabled
+
+    # ----------- Install Node Exporter on Test Server ----------- #
+    - name: Install Node Exporter on test server
+      hosts: test
+      become: true
+      tasks:
+        - name: Download Node Exporter
+          get_url:
+            url: https://github.com/prometheus/node_exporter/releases/download/v1.3.1/node_exporter-1.3.1.linux-amd64.tar.gz
+            dest: /tmp/node_exporter.tar.gz
+
+        - name: Extract Node Exporter
+          unarchive:
+            src: /tmp/node_exporter.tar.gz
+            dest: /opt/
+            remote_src: yes
+
+        - name: Copy Node Exporter binary
+          copy:
+            src: /opt/node_exporter-1.3.1.linux-amd64/node_exporter
+            dest: /usr/local/bin/node_exporter
+            mode: '0755'
+
+        - name: Start Node Exporter service
+          systemd:
+            name: node_exporter
+            enabled: yes
+            state: started
+            user: root
+            exec_start: /usr/local/bin/node_exporter
